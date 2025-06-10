@@ -13,6 +13,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from .forms import MovieForm, HallForm, ScreeningForm
 from django.contrib.auth.decorators import login_required
 from datetime import timedelta
+from django.db.models import Q
+from django.db.models.functions import TruncHour
 import logging
 logger = logging.getLogger(__name__)
 
@@ -58,11 +60,48 @@ def user_login(request):
 def home(request):
     local_now = timezone.localtime(timezone.now())
 
+    search_query = request.GET.get('search', '')
+    hall_filter = request.GET.get('hall', '')
+    genre_filter = request.GET.get('genre', '')
+    time_filter = request.GET.get('time', '')
+
     screenings = Screening.objects.filter(
         start_time__gt=local_now
     ).order_by('start_time')
 
-    return render(request, 'ticket/home.html', {'screenings': screenings})
+    if search_query:
+        screenings = screenings.filter(
+            Q(movie__title__icontains=search_query) |
+            Q(movie__description__icontains=search_query)
+        )
+
+    if hall_filter:
+        screenings = screenings.filter(hall_id=hall_filter)
+
+    if genre_filter:
+        screenings = screenings.filter(movie__genre=genre_filter)
+
+    if time_filter:
+        screenings = screenings.filter(start_time__hour=time_filter)
+
+    genres = Movie.objects.values_list('genre', flat=True).distinct()
+
+    time_slots = sorted(set(
+        s.start_time.hour for s in Screening.objects.all()
+    ))
+
+    return render(request, 'ticket/home.html', {
+        'screenings': screenings,
+        'halls': Hall.objects.all(),
+        'genres': genres,
+        'time_slots': time_slots,
+        'current_filters': {
+            'search': search_query,
+            'hall': hall_filter,
+            'genre': genre_filter,
+            'time': time_filter
+        }
+    })
 
 
 def user_logout(request):
@@ -77,7 +116,6 @@ def screening_detail(request, screening_id):
 
     seats = Seat.objects.filter(hall=screening.hall).order_by('row', 'number')
 
-    # Получаем занятые места
     booked_tickets = Ticket.objects.filter(screening=screening)
     booked_seat_ids = [ticket.seat.id for ticket in booked_tickets]
 

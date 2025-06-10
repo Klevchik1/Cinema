@@ -50,7 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'Cinema.urls'
+ROOT_URLCONF = 'cinematic.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Cinema.wsgi.application'
+WSGI_APPLICATION = 'cinematic.wsgi.application'
 
 
 # Database
@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'Cinema.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cinema',
+        'NAME': 'cinematic',
         'USER': 'postgres',
         'PASSWORD': '123',
         'HOST': 'localhost',
